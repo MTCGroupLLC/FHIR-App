@@ -8,7 +8,7 @@ from api.registry import router as registry_router
 from api.search import router as search_router
 
 app = FastAPI(
-    title="dRLS — Dynamic Record Locator Service",
+    title="FHIR-Based Medical Record Locator Service",
     description="Locates patient records across all active FHIR API endpoints.",
     version="0.1.0",
 )
