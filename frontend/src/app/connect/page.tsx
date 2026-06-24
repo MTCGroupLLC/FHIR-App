@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Endpoint } from "@/types";
-import { getSessionId } from "@/lib/session";
+import { getSessionId, setPatientDemographics } from "@/lib/session";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -156,6 +156,9 @@ export default function ConnectPage() {
 
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "auth-complete") {
+        if (e.data.demographics && Object.keys(e.data.demographics).length > 0) {
+          setPatientDemographics(e.data.demographics);
+        }
         setConnecting(null);
         fetchEndpoints();
       }

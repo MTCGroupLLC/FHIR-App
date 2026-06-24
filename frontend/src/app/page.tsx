@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import SearchForm from "@/components/SearchForm";
 import SearchResults from "@/components/SearchResults";
 import { startSearch, getSearchStatus, fetchEndpoints } from "@/lib/api";
+import { getPatientDemographics } from "@/lib/session";
 import type { PatientDemographics, SearchStatus } from "@/types";
 
 export default function PatientPage() {
@@ -11,6 +12,7 @@ export default function PatientPage() {
   const [status, setStatus] = useState<SearchStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [connectedCount, setConnectedCount] = useState<number | null>(null);
+  const [savedDemo, setSavedDemo] = useState<Partial<PatientDemographics>>({});
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = () => {
@@ -18,6 +20,7 @@ export default function PatientPage() {
   };
 
   useEffect(() => {
+    setSavedDemo(getPatientDemographics());
     fetchEndpoints()
       .then((data) => {
         const connected = (data.endpoints ?? []).filter((e: { connected: boolean }) => e.connected).length;
@@ -94,7 +97,7 @@ export default function PatientPage() {
       )}
 
       <div className={noConnections ? "opacity-40 pointer-events-none select-none" : ""}>
-        <SearchForm onSubmit={handleSubmit} loading={loading} />
+        <SearchForm onSubmit={handleSubmit} loading={loading} initialValues={savedDemo} />
       </div>
 
       {status && <SearchResults status={status} />}

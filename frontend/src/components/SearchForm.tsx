@@ -6,13 +6,22 @@ import type { PatientDemographics } from "@/types";
 interface Props {
   onSubmit: (demographics: PatientDemographics) => void;
   loading: boolean;
+  initialValues?: Partial<PatientDemographics>;
 }
 
-export default function SearchForm({ onSubmit, loading }: Props) {
+export default function SearchForm({ onSubmit, loading, initialValues }: Props) {
   const [form, setForm] = useState<PatientDemographics>({
-    first_name: "",
-    last_name: "",
-    date_of_birth: "",
+    first_name: initialValues?.first_name ?? "",
+    last_name: initialValues?.last_name ?? "",
+    date_of_birth: initialValues?.date_of_birth ?? "",
+    gender: initialValues?.gender ?? "",
+    street: initialValues?.street ?? "",
+    city: initialValues?.city ?? "",
+    state: initialValues?.state ?? "",
+    postal_code: initialValues?.postal_code ?? "",
+    phone: initialValues?.phone ?? "",
+    member_id: initialValues?.member_id ?? "",
+    ssn_last4: initialValues?.ssn_last4 ?? "",
   });
 
   const set = (field: keyof PatientDemographics) =>
@@ -32,9 +41,18 @@ export default function SearchForm({ onSubmit, loading }: Props) {
     <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-gray-800">Patient Information</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Enter the patient&apos;s details to search all active FHIR endpoints for matching records.
-        </p>
+        {initialValues?.first_name ? (
+          <p className="text-sm text-green-700 mt-1 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Pre-filled from your connected account — review and search.
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500 mt-1">
+            Enter the patient&apos;s details to search all connected FHIR endpoints for matching records.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

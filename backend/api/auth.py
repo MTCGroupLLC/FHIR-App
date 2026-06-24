@@ -100,7 +100,7 @@ async def oauth_callback(
     if error:
         raise HTTPException(status_code=400, detail=f"Authorization denied: {error}")
 
-    token = await exchange_code(
+    token, demographics = await exchange_code(
         state,
         code,
         redirect_uri or settings.smart_redirect_uri,
@@ -109,7 +109,7 @@ async def oauth_callback(
     if not token:
         raise HTTPException(status_code=400, detail="Token exchange failed")
 
-    return {"success": True, "message": "Authorization complete. You can close this window."}
+    return {"success": True, "demographics": demographics, "message": "Authorization complete. You can close this window."}
 
 
 @router.get("/token/{endpoint_id}")

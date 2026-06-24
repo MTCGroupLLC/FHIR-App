@@ -82,15 +82,33 @@ async def build_authorization_url(
     return f"{smart.authorization_endpoint}?{urlencode(params)}"
 
 
+def _extract_patient_demographics(patient: dict) -> dict:
+    """Pull name, DOB, and gender from a FHIR R4 Patient resource."""
+    demo: dict = {}
+    for name in patient.get("name", []):
+        use = name.get("use", "")
+        if use in ("official", "usual", "") or not demo.get("last_name"):
+            if name.get("family"):
+                demo["last_name"] = name["family"]
+            given = name.get("given", [])
+            if given:
+                demo["first_name"] = given[0]
+    if patient.get("birthDate"):
+        demo["date_of_birth"] = patient["birthDate"]
+    if patient.get("gender") in ("male", "female", "other", "unknown"):
+        demo["gender"] = patient["gender"]
+    return demo
+
+
 async def exchange_code(
     state: str,
     code: str,
     redirect_uri: str,
     client_id: str,
-) -> Optional[str]:
+) -> tuple[Optional[str], dict]:
     """
     Exchanges an authorization code for an access token.
-    Returns the access token, or None on failure.
+    Returns (access_token, patient_demographics). Token is None on failure.
     Cleans up state/verifier from Redis after use.
     """
     state_data = await get_state(state)
@@ -98,7 +116,7 @@ async def exchange_code(
 
     if not state_data or not verifier:
         logger.warning("Missing state or verifier for state=%s", state)
-        return None
+        return None, {}
 
     endpoint_id = state_data["endpoint_id"]
     session_id = state_data.get("session_id", "default")
@@ -117,7 +135,7 @@ async def exchange_code(
 
     smart = await _get_smart_config(endpoint)
     if not smart:
-        return None
+        return None, {}
 
     effective_client_id = endpoint.client_id or client_id
 
@@ -143,12 +161,26 @@ async def exchange_code(
             token_data = resp.json()
             access_token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 3600)
+            demographics: dict = {}
             if access_token:
                 await store_token(session_id, endpoint_id, access_token, expires_in)
-            return access_token
+                # Fetch patient demographics using the patient ID from the token response
+                patient_id = token_data.get("patient")
+                if patient_id:
+                    try:
+                        pr = await client.get(
+                            f"{endpoint.base_url}/Patient/{patient_id}",
+                            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/fhir+json"},
+                            timeout=10,
+                        )
+                        if pr.status_code == 200:
+                            demographics = _extract_patient_demographics(pr.json())
+                    except Exception as pe:
+                        logger.warning("Could not fetch Patient resource for %s: %s", endpoint_id, pe)
+            return access_token, demographics
         except Exception as e:
             logger.error("Token exchange failed for endpoint %s: %s", endpoint_id, e)
-            return None
+            return None, {}
 
 
 # ---------------------------------------------------------------------------

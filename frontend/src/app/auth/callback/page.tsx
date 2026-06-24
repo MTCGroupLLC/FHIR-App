@@ -46,9 +46,11 @@ function CallbackHandler() {
         if (data.success) {
           setStatus("success");
           setMessage("Authorization complete! You can now search for your records at this endpoint.");
-          // Signal parent window (Connect page) and close popup
           if (window.opener) {
-            window.opener.postMessage({ type: "auth-complete" }, window.location.origin);
+            window.opener.postMessage(
+              { type: "auth-complete", demographics: data.demographics ?? {} },
+              window.location.origin
+            );
             setTimeout(() => window.close(), 1500);
           }
         } else {
