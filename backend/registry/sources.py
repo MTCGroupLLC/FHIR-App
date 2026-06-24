@@ -127,6 +127,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             auth_type=AuthType.smart_standalone,
             authorize_url="https://fhir.epic.com/interconnect-fhir-oauth/oauth2/authorize",
             token_url="https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+            client_id="82028c07-2117-45de-9a82-20d91dc77355",
+            scopes="openid fhirUser launch/patient patient/Patient.read patient/Observation.read patient/Condition.read patient/MedicationRequest.read patient/DiagnosticReport.read patient/DocumentReference.read patient/AllergyIntolerance.read patient/Immunization.read",
             fhir_version="R4",
             source="manual",
         ),
