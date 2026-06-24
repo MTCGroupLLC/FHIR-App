@@ -21,8 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <nav className="flex gap-4 text-sm">
-              <a href="/" className="hover:text-blue-200">Patient Search</a>
-              <a href="/provider" className="hover:text-blue-200">Provider Lookup</a>
+              <a href="/" className="hover:text-blue-200">Search</a>
+              <a href="/connect" className="hover:text-blue-200 font-semibold">Connect Accounts</a>
             </nav>
           </div>
         </header>

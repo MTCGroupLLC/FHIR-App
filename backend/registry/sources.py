@@ -44,6 +44,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://patient-access.aetna.com/Patient-Access-Combined/R4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            authorize_url="https://patient-access.aetna.com/Patient-Access-Combined/oauth2/authorize",
+            token_url="https://patient-access.aetna.com/Patient-Access-Combined/oauth2/token",
             source="manual",
         ),
         FHIREndpoint(

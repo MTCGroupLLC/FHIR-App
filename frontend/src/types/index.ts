@@ -12,15 +12,20 @@ export interface PatientDemographics {
   ssn_last4?: string;
 }
 
+export interface Endpoint {
+  id: string;
+  name: string;
+  base_url: string;
+  endpoint_type: "payer" | "provider" | "government" | "hie";
+  auth_type: "open" | "smart_standalone" | "smart_backend_services" | "oauth2" | null;
+  authorize_url?: string | null;
+  token_url?: string | null;
+  connected: boolean;
+  source: string;
+}
+
 export interface MatchResult {
-  endpoint: {
-    id: string;
-    name: string;
-    base_url: string;
-    endpoint_type: string;
-    auth_type?: string;
-    source: string;
-  };
+  endpoint: Endpoint;
   matched: boolean;
   patient_id?: string;
   match_confidence?: number;
@@ -37,4 +42,5 @@ export interface SearchStatus {
   matches: number;
   results: MatchResult[];
   errors?: MatchResult[];
+  not_connected?: number;
 }

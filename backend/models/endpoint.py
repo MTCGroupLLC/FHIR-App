@@ -37,7 +37,8 @@ class FHIREndpoint(BaseModel):
     auth_type: Optional[AuthType] = None
     token_url: Optional[str] = None
     authorize_url: Optional[str] = None
-    source: str                  # cms, lantern, epic, cerner, manual
+    client_id: Optional[str] = None   # per-endpoint OAuth client ID; overrides global setting
+    source: str                        # cms, lantern, epic, cerner, manual
 
 
 class MatchResult(BaseModel):

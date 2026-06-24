@@ -28,6 +28,7 @@ async def get_search_status(job_id: str):
             "total": meta.get("total", 0),
             "matches": meta.get("matches", 0),
             "results": meta.get("results", []),
+            "not_connected": meta.get("not_connected", 0),
         }
 
     if result.state == "SUCCESS":
@@ -39,6 +40,7 @@ async def get_search_status(job_id: str):
             "matches": data.get("matches_found", 0),
             "results": data.get("results", []),
             "errors": data.get("errors", []),
+            "not_connected": data.get("not_connected", 0),
         }
 
     if result.state == "FAILURE":

@@ -66,9 +66,11 @@ async def build_authorization_url(
     if extra_scopes:
         scopes = f"{scopes} {extra_scopes}"
 
+    effective_client_id = endpoint.client_id or client_id
+
     params = {
         "response_type": "code",
-        "client_id": client_id,
+        "client_id": effective_client_id,
         "redirect_uri": redirect_uri,
         "scope": scopes,
         "state": state,

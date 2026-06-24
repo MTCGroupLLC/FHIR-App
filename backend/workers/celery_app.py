@@ -30,17 +30,31 @@ def run_search(self, demographics: dict) -> dict[str, Any]:
 async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
     import asyncio
 
-    import redis.asyncio as aioredis
-
+    from auth.token_cache import get_token
     from matching.engine import match_patient
+    from models.endpoint import AuthType
     from models.patient import PatientDemographics
     from registry.cache import get_all_endpoints
 
     demo = PatientDemographics(**demographics)
-    endpoints = await get_all_endpoints()
+    all_endpoints = await get_all_endpoints()
 
-    confirmed = []   # matched=True — green cards
-    auth_needed = [] # auth_url present — amber cards
+    needs_auth = {AuthType.smart_standalone, AuthType.oauth2, AuthType.smart_backend_services}
+
+    # Split into queryable (token cached or open) vs not connected
+    queryable = []
+    not_connected = []
+    for ep in all_endpoints:
+        if ep.auth_type in needs_auth:
+            token = await get_token(ep.id)
+            if token:
+                queryable.append(ep)
+            else:
+                not_connected.append(ep)
+        else:
+            queryable.append(ep)
+
+    confirmed = []
     errors = []
     semaphore = asyncio.Semaphore(settings.max_concurrent_queries)
 
@@ -49,16 +63,14 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
             result = await match_patient(ep, demo, timeout=settings.endpoint_timeout)
             return result.model_dump()
 
-    tasks = [query_one(ep) for ep in endpoints]
-    total = len(tasks)
+    tasks_list = [query_one(ep) for ep in queryable]
+    total = len(tasks_list)
 
-    for i, coro in enumerate(asyncio.as_completed(tasks)):
+    for i, coro in enumerate(asyncio.as_completed(tasks_list)):
         result = await coro
         if result.get("matched"):
             confirmed.append(result)
-        elif result.get("auth_url") or result.get("error") == "Authorization required":
-            auth_needed.append(result)
-        elif result.get("error") and result.get("error") != "No Patient resource":
+        elif result.get("error") and result.get("error") not in ("No Patient resource", "Authorization required"):
             errors.append(result)
 
         task.update_state(
@@ -67,14 +79,16 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
                 "current": i + 1,
                 "total": total,
                 "matches": len(confirmed),
-                "results": confirmed + auth_needed,
+                "results": confirmed,
+                "not_connected": len(not_connected),
             },
         )
 
     return {
         "status": "complete",
         "total_queried": total,
+        "not_connected": len(not_connected),
         "matches_found": len(confirmed),
-        "results": confirmed + auth_needed,
+        "results": confirmed,
         "errors": errors[:20],
     }
