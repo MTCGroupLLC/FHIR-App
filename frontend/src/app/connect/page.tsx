@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Endpoint } from "@/types";
-import { getSessionId, setPatientDemographics } from "@/lib/session";
+import { getSessionId, setPatientDemographics, getPatientDemographics } from "@/lib/session";
+import { getPersonaForEndpoint, buildPersonaHint } from "@/lib/personas";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -102,11 +103,19 @@ function EndpointCard({
   endpoint,
   onConnect,
   connecting,
+  patientName,
 }: {
   endpoint: Endpoint;
   onConnect: (ep: Endpoint) => void;
   connecting: boolean;
+  patientName: string | null;
 }) {
+  const patientDemo = typeof window !== "undefined" ? getPatientDemographics() : {};
+  const persona = getPersonaForEndpoint(endpoint.id, patientDemo);
+  const hint = persona && patientName
+    ? buildPersonaHint(persona, patientName)
+    : endpoint.sandbox_hint;
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <div className="flex items-center justify-between gap-4">
@@ -118,12 +127,12 @@ function EndpointCard({
           <StatusBadge endpoint={endpoint} onConnect={onConnect} connecting={connecting} />
         </div>
       </div>
-      {endpoint.sandbox_hint && !endpoint.connected && (
+      {hint && !endpoint.connected && (
         <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
           <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
           </svg>
-          <p className="text-xs text-amber-800">{endpoint.sandbox_hint}</p>
+          <p className="text-xs text-amber-800">{hint}</p>
         </div>
       )}
     </div>
@@ -135,6 +144,10 @@ export default function ConnectPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const patientDemo = typeof window !== "undefined" ? getPatientDemographics() : {};
+  const patientName = patientDemo.first_name
+    ? `${patientDemo.first_name} ${patientDemo.last_name ?? ""}`.trim()
+    : null;
 
   const fetchEndpoints = useCallback(async () => {
     try {
@@ -223,7 +236,7 @@ export default function ConnectPage() {
       </div>
       <div className="space-y-2">
         {eps.map((ep) => (
-          <EndpointCard key={ep.id} endpoint={ep} onConnect={handleConnect} connecting={connecting === ep.id} />
+          <EndpointCard key={ep.id} endpoint={ep} onConnect={handleConnect} connecting={connecting === ep.id} patientName={patientName} />
         ))}
       </div>
     </div>
@@ -233,10 +246,18 @@ export default function ConnectPage() {
     <div className="space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Connect Demo Health Accounts</h2>
-        <p className="text-gray-500 mt-1 text-sm max-w-2xl">
-          Connect each sandbox endpoint <strong>once</strong>. Your authorization is saved — every
-          future search automatically queries your connected accounts without asking again.
-        </p>
+        {patientName ? (
+          <p className="text-gray-500 mt-1 text-sm max-w-2xl">
+            Connecting accounts for <strong className="text-gray-800">{patientName}</strong>.
+            Each endpoint below shows the demo credentials that best match this patient&apos;s demographics.
+            Connect each one — after the last connection the search runs automatically.
+          </p>
+        ) : (
+          <p className="text-gray-500 mt-1 text-sm max-w-2xl">
+            Connect each sandbox endpoint <strong>once</strong>. Your authorization is saved — every
+            future search automatically queries your connected accounts without asking again.
+          </p>
+        )}
         {!loading && (
           <p className="text-sm mt-2 font-medium text-blue-700">
             {connectedCount} of {totalCount} connected

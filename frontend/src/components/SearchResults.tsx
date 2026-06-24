@@ -16,7 +16,7 @@ const TYPE_LABEL: Record<string, string> = {
   hie: "HIE",
 };
 
-function MatchCard({ result }: { result: MatchResult }) {
+function MatchCard({ result, patientName }: { result: MatchResult; patientName?: string }) {
   const { endpoint, patient_id, match_confidence, access_url } = result;
   return (
     <div className="bg-white border border-green-200 rounded-lg p-4 shadow-sm">
@@ -31,7 +31,12 @@ function MatchCard({ result }: { result: MatchResult }) {
           </span>
         )}
       </div>
-      {patient_id && (
+      {patientName && (
+        <p className="text-xs text-green-700 mt-2 font-medium">
+          Record matched for: {patientName}
+        </p>
+      )}
+      {!patientName && patient_id && (
         <p className="text-xs text-gray-600 mt-2">
           Patient ID: <code className="bg-gray-100 px-1 rounded">{patient_id}</code>
         </p>
@@ -46,7 +51,7 @@ function MatchCard({ result }: { result: MatchResult }) {
   );
 }
 
-export default function SearchResults({ status, mode = "patient" }: { status: SearchStatus; mode?: "patient" | "provider" }) {
+export default function SearchResults({ status, mode = "patient", patientName }: { status: SearchStatus; mode?: "patient" | "provider"; patientName?: string }) {
   const pct = status.total > 0 ? Math.round((status.current / status.total) * 100) : 0;
   const isRunning = status.state === "progress" || status.state === "pending";
   const confirmed = status.results.filter((r) => r.matched);
@@ -79,7 +84,7 @@ export default function SearchResults({ status, mode = "patient" }: { status: Se
           </p>
           <div className="space-y-3">
             {confirmed.map((r) => (
-              <MatchCard key={r.endpoint.id} result={r} />
+              <MatchCard key={r.endpoint.id} result={r} patientName={patientName} />
             ))}
           </div>
         </div>

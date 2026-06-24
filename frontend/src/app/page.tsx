@@ -1,34 +1,69 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import SearchForm from "@/components/SearchForm";
+import { useRouter } from "next/navigation";
+import PatientIntakeForm from "@/components/PatientIntakeForm";
 import SearchResults from "@/components/SearchResults";
 import { startSearch, getSearchStatus, fetchEndpoints } from "@/lib/api";
-import { getPatientDemographics } from "@/lib/session";
+import { getPatientDemographics, hasPatientProfile, setPatientDemographics, clearPatientProfile } from "@/lib/session";
 import type { PatientDemographics, SearchStatus } from "@/types";
 
-export default function PatientPage() {
+export default function Home() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);  // hydrated
+  const [hasProfile, setHasProfile] = useState(false);
+  const [demographics, setDemographics] = useState<Partial<PatientDemographics>>({});
+  const [connectedCount, setConnectedCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<SearchStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [connectedCount, setConnectedCount] = useState<number | null>(null);
-  const [savedDemo, setSavedDemo] = useState<Partial<PatientDemographics>>({});
-  const [showForm, setShowForm] = useState(false);
-  const [autoSearched, setAutoSearched] = useState(false);
+  const [autoSearchFired, setAutoSearchFired] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = () => {
     if (pollRef.current) clearInterval(pollRef.current);
   };
 
-  const runSearch = async (demographics: PatientDemographics) => {
+  // Hydrate from localStorage after mount
+  useEffect(() => {
+    const profile = hasPatientProfile();
+    const demo = getPatientDemographics();
+    setHasProfile(profile);
+    setDemographics(demo);
+    setReady(true);
+  }, []);
+
+  // Once profile confirmed, fetch connected count and auto-search if ready
+  useEffect(() => {
+    if (!ready || !hasProfile) return;
+
+    fetchEndpoints()
+      .then((data) => {
+        const connected = (data.endpoints ?? []).filter((e: { connected: boolean }) => e.connected).length;
+        setConnectedCount(connected);
+
+        if (connected > 0 && !autoSearchFired) {
+          const demo = getPatientDemographics();
+          if (demo.first_name && demo.last_name && demo.date_of_birth) {
+            setAutoSearchFired(true);
+            runSearch(demo as PatientDemographics);
+          }
+        }
+      })
+      .catch(() => setConnectedCount(0));
+
+    return stopPolling;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, hasProfile]);
+
+  const runSearch = async (demo: PatientDemographics) => {
     setLoading(true);
     setError(null);
     setStatus(null);
     stopPolling();
 
     try {
-      const jobId = await startSearch(demographics);
+      const jobId = await startSearch(demo);
       pollRef.current = setInterval(async () => {
         try {
           const s = await getSearchStatus(jobId);
@@ -43,102 +78,96 @@ export default function PatientPage() {
         }
       }, 1500);
     } catch {
-      setError("Could not connect to the backend. Is the service running?");
+      setError("Could not connect to the backend.");
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const demo = getPatientDemographics();
-    setSavedDemo(demo);
+  const handleIntakeSubmit = (demo: PatientDemographics) => {
+    setPatientDemographics(demo);
+    setHasProfile(true);
+    setDemographics(demo);
+    router.push("/connect");
+  };
 
-    fetchEndpoints()
-      .then((data) => {
-        const connected = (data.endpoints ?? []).filter((e: { connected: boolean }) => e.connected).length;
-        setConnectedCount(connected);
+  const handleReset = () => {
+    clearPatientProfile();
+    stopPolling();
+    setHasProfile(false);
+    setDemographics({});
+    setConnectedCount(null);
+    setStatus(null);
+    setAutoSearchFired(false);
+  };
 
-        // Auto-search when demographics are pre-populated from a connected account
-        if (connected > 0 && demo.first_name && demo.last_name && demo.date_of_birth && !autoSearched) {
-          setAutoSearched(true);
-          runSearch(demo as PatientDemographics);
-        }
-      })
-      .catch(() => setConnectedCount(0));
+  if (!ready) return null;
 
-    return stopPolling;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ── Step 1: Intake ─────────────────────────────────────────────────────────
+  if (!hasProfile) {
+    return <PatientIntakeForm onSubmit={handleIntakeSubmit} />;
+  }
 
+  // ── Step 3: Search (after Connect) ─────────────────────────────────────────
+  const fullName = `${demographics.first_name ?? ""} ${demographics.last_name ?? ""}`.trim();
   const noConnections = connectedCount !== null && connectedCount === 0;
-  const hasDemo = !!(savedDemo.first_name && savedDemo.last_name);
-
-  const demoName = hasDemo
-    ? `${savedDemo.first_name} ${savedDemo.last_name}`
-    : null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Demo Patient Search</h2>
-        <p className="text-gray-500 mt-1 text-sm">
-          Searches all connected sandbox endpoints simultaneously using the demo patient&apos;s identity.
-          In production, this is the patient&apos;s real name and date of birth queried across every connected payer and provider.
-        </p>
+      {/* Patient identity banner */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Patient Search</h2>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Searching for records matching{" "}
+            <span className="font-semibold text-gray-800">{fullName}</span>
+            {demographics.date_of_birth && (
+              <span> · DOB {demographics.date_of_birth}</span>
+            )}
+            {demographics.gender && (
+              <span> · {demographics.gender.charAt(0).toUpperCase() + demographics.gender.slice(1)}</span>
+            )}
+          </p>
+        </div>
+        <button
+          onClick={handleReset}
+          className="text-xs text-gray-400 hover:text-gray-600 underline whitespace-nowrap"
+        >
+          Change patient
+        </button>
       </div>
 
       {/* No connections yet */}
       {noConnections && (
         <div className="bg-amber-50 border border-amber-300 rounded-lg px-5 py-5 text-center space-y-3">
-          <p className="font-semibold text-amber-900">No sandbox accounts connected yet</p>
+          <p className="font-semibold text-amber-900">No accounts connected yet</p>
           <p className="text-sm text-amber-800">
-            Connect at least one demo endpoint first. After connecting, the demo patient&apos;s
-            identity is stored and the search runs automatically — no manual entry required.
+            Connect demo endpoints to run the search. The right sandbox credentials
+            for <strong>{fullName}</strong> are pre-selected on the Connect page.
           </p>
           <a
             href="/connect"
             className="inline-block px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
           >
-            Connect Demo Accounts →
+            Connect Accounts →
           </a>
         </div>
       )}
 
-      {/* Connected with known demo identity */}
-      {!noConnections && hasDemo && !showForm && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold text-green-800">
-              Searching as demo patient: <span className="font-bold">{demoName}</span>
-              {savedDemo.date_of_birth && (
-                <span className="font-normal text-green-700"> · DOB {savedDemo.date_of_birth}</span>
-              )}
-            </p>
-            <p className="text-xs text-green-700 mt-0.5">
-              {connectedCount} connected account{connectedCount !== 1 ? "s" : ""} will be queried
-            </p>
-          </div>
+      {/* Connected — search controls */}
+      {!noConnections && connectedCount !== null && (
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => setShowForm(true)}
-            className="text-xs text-green-700 underline whitespace-nowrap"
+            onClick={() => runSearch(demographics as PatientDemographics)}
+            disabled={loading}
+            className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-300 text-white font-semibold rounded-lg transition text-sm"
           >
-            Change criteria
+            {loading ? "Searching…" : "Search All Connected Accounts"}
           </button>
-        </div>
-      )}
-
-      {/* Connected but no stored demographics — show form */}
-      {!noConnections && !hasDemo && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-          No demo patient identity stored yet. Connect a demo account first — demographics are
-          captured automatically during the OAuth flow. Or enter them manually below.
-        </div>
-      )}
-
-      {/* Demo limitation notice */}
-      {!noConnections && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-xs text-gray-500">
-          <strong className="text-gray-700">Demo note:</strong> Each sandbox endpoint uses a different synthetic test patient.
-          In production, a single real patient identity would match records across every connected payer and provider simultaneously.
+          <span className="text-xs text-gray-400">
+            {connectedCount} endpoint{connectedCount !== 1 ? "s" : ""} connected
+            {" · "}
+            <a href="/connect" className="underline hover:text-gray-600">manage</a>
+          </span>
         </div>
       )}
 
@@ -148,40 +177,16 @@ export default function PatientPage() {
         </div>
       )}
 
-      {/* Manual search form — shown when no demo or user clicks "Change criteria" */}
-      {(!noConnections && (!hasDemo || showForm)) && (
-        <div>
-          {showForm && (
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-700">Edit search criteria</p>
-              <button onClick={() => setShowForm(false)} className="text-xs text-gray-400 hover:text-gray-600 underline">
-                Cancel
-              </button>
-            </div>
-          )}
-          <div className={noConnections ? "opacity-40 pointer-events-none select-none" : ""}>
-            <SearchForm onSubmit={runSearch} loading={loading} initialValues={savedDemo} />
-          </div>
+      {/* Demo data notice */}
+      {status && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-xs text-gray-500">
+          <strong className="text-gray-600">Demo:</strong> Records below are synthetic FHIR data from sandbox endpoints.
+          Patient demographics have been matched to <strong>{fullName}</strong> for illustration.
+          No real health records are accessed or stored.
         </div>
       )}
 
-      {/* Running / Re-search button when auto-searched */}
-      {!noConnections && hasDemo && !showForm && (
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => runSearch(savedDemo as PatientDemographics)}
-            disabled={loading}
-            className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-300 text-white font-semibold rounded-lg transition text-sm"
-          >
-            {loading ? "Searching…" : "Search All Connected Accounts"}
-          </button>
-          {loading && (
-            <span className="text-sm text-gray-500">Querying {connectedCount} endpoint{connectedCount !== 1 ? "s" : ""}…</span>
-          )}
-        </div>
-      )}
-
-      {status && <SearchResults status={status} />}
+      {status && <SearchResults status={status} patientName={fullName} />}
     </div>
   );
 }

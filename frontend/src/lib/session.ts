@@ -33,3 +33,13 @@ export function getPatientDemographics(): Partial<PatientDemographics> {
     return {};
   }
 }
+
+export function hasPatientProfile(): boolean {
+  const d = getPatientDemographics();
+  return !!(d.first_name && d.last_name && d.date_of_birth);
+}
+
+export function clearPatientProfile(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PATIENT_KEY);
+}
