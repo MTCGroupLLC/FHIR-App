@@ -62,9 +62,10 @@ export default function PatientPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Find Your Medical Records</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Patient Search — Find Your Records</h2>
         <p className="text-gray-500 mt-1 text-sm">
-          We query all connected FHIR-enabled health systems to locate your records in real time.
+          Authorize access to your health accounts once, then search all of them simultaneously.
+          Demographics are pre-filled from your connected account.
         </p>
       </div>
 

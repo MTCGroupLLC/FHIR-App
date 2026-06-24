@@ -23,9 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <p className="text-blue-200 text-sm">FHIR-Based Medical Record Locator Service</p>
               </div>
             </div>
-            <nav className="flex gap-4 text-sm">
-              <a href="/" className="hover:text-blue-200">Search</a>
-              <a href="/connect" className="hover:text-blue-200 font-semibold">Connect Accounts</a>
+            <nav className="flex gap-5 text-sm items-center">
+              <a href="/" className="hover:text-blue-200">Patient Search</a>
+              <a href="/provider" className="hover:text-blue-200">Provider Search</a>
+              <a href="/connect" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold px-3 py-1 rounded-md transition">Connect Accounts</a>
             </nav>
           </div>
         </header>

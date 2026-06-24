@@ -46,7 +46,7 @@ function MatchCard({ result }: { result: MatchResult }) {
   );
 }
 
-export default function SearchResults({ status }: { status: SearchStatus }) {
+export default function SearchResults({ status, mode = "patient" }: { status: SearchStatus; mode?: "patient" | "provider" }) {
   const pct = status.total > 0 ? Math.round((status.current / status.total) * 100) : 0;
   const isRunning = status.state === "progress" || status.state === "pending";
   const confirmed = status.results.filter((r) => r.matched);
@@ -85,18 +85,27 @@ export default function SearchResults({ status }: { status: SearchStatus }) {
         </div>
       )}
 
-      {/* Not-connected accounts prompt */}
+      {/* Not-connected accounts */}
       {status.state === "complete" && notConnected > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between gap-4">
-          <p className="text-sm text-amber-800">
-            <strong>{notConnected} account{notConnected !== 1 ? "s" : ""}</strong> not searched — not yet connected.
-          </p>
-          <a
-            href="/connect"
-            className="text-xs font-semibold px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition whitespace-nowrap"
-          >
-            Connect accounts →
-          </a>
+          {mode === "provider" ? (
+            <p className="text-sm text-amber-800">
+              <strong>{notConnected} endpoint{notConnected !== 1 ? "s" : ""}</strong> skipped —
+              backend service credentials not yet configured for these payers.
+            </p>
+          ) : (
+            <p className="text-sm text-amber-800">
+              <strong>{notConnected} account{notConnected !== 1 ? "s" : ""}</strong> not searched — not yet connected.
+            </p>
+          )}
+          {mode === "patient" && (
+            <a
+              href="/connect"
+              className="text-xs font-semibold px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition whitespace-nowrap"
+            >
+              Connect accounts →
+            </a>
+          )}
         </div>
       )}
 
@@ -107,16 +116,25 @@ export default function SearchResults({ status }: { status: SearchStatus }) {
         </p>
       )}
 
-      {/* Ran no queries because nothing connected */}
+      {/* Ran no queries */}
       {status.state === "complete" && status.total === 0 && notConnected > 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-4 text-center">
-          <p className="text-sm text-gray-600 mb-3">No accounts connected yet. Connect your health accounts to search for your records.</p>
-          <a
-            href="/connect"
-            className="inline-block text-sm font-semibold px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-          >
-            Connect your accounts →
-          </a>
+          {mode === "provider" ? (
+            <p className="text-sm text-gray-600">
+              No endpoints could be queried. Backend service credentials are required for provider-mode
+              searches. <a href="/connect" className="text-blue-600 underline">View credential status →</a>
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600 mb-3">No accounts connected yet. Connect your health accounts to search for your records.</p>
+              <a
+                href="/connect"
+                className="inline-block text-sm font-semibold px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              >
+                Connect your accounts →
+              </a>
+            </>
+          )}
         </div>
       )}
     </div>
