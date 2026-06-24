@@ -39,6 +39,7 @@ class FHIREndpoint(BaseModel):
     authorize_url: Optional[str] = None
     client_id: Optional[str] = None      # per-endpoint OAuth client ID; overrides global setting
     client_secret: Optional[str] = None  # confidential client secret; load from env, never hardcode
+    scopes: Optional[str] = None         # space-separated OAuth scopes; overrides default patient scopes
     source: str                          # cms, lantern, epic, cerner, manual
 
 

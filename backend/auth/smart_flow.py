@@ -34,7 +34,7 @@ from models.endpoint import FHIREndpoint, SmartConfig
 
 logger = logging.getLogger(__name__)
 
-PATIENT_SCOPES = "patient/*.read launch/patient openid fhirUser"
+PATIENT_SCOPES = "patient/*.read openid profile offline_access"
 SYSTEM_SCOPES = "system/Patient.read"
 
 
@@ -62,7 +62,7 @@ async def build_authorization_url(
     await store_state(state, {"endpoint_id": endpoint.id, "redirect_uri": redirect_uri})
     await store_verifier(state, verifier)
 
-    scopes = PATIENT_SCOPES
+    scopes = endpoint.scopes or PATIENT_SCOPES
     if extra_scopes:
         scopes = f"{scopes} {extra_scopes}"
 

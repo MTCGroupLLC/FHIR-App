@@ -29,6 +29,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             token_url="https://sandbox.bluebutton.cms.gov/v2/o/token/",
             client_id="xPydhk7ReTjAgyzZnvYoc70LbdrWCDQvyyZrZdph",
             client_secret=os.getenv("CMS_BB_CLIENT_SECRET"),
+            scopes="patient/Patient.read patient/Coverage.read patient/ExplanationOfBenefit.read profile openid",
             source="manual",
         ),
         FHIREndpoint(
@@ -39,6 +40,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             auth_type=AuthType.smart_standalone,
             authorize_url="https://sandbox-api.va.gov/oauth2/health/v1/authorization",
             token_url="https://sandbox-api.va.gov/oauth2/health/v1/token",
+            scopes="patient/Patient.read patient/Observation.read patient/Condition.read patient/MedicationRequest.read patient/DiagnosticReport.read patient/DocumentReference.read launch openid profile offline_access",
             source="manual",
         ),
         # ── Major Commercial Payers ────────────────────────────────────────────
