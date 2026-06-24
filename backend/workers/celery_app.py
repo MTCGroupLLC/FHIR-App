@@ -56,7 +56,7 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
         result = await coro
         if result.get("matched"):
             confirmed.append(result)
-        elif result.get("auth_url"):
+        elif result.get("auth_url") or result.get("error") == "Authorization required":
             auth_needed.append(result)
         elif result.get("error") and result.get("error") != "No Patient resource":
             errors.append(result)

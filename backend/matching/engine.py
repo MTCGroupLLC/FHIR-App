@@ -124,15 +124,12 @@ async def match_patient(
 
 
 async def _return_auth_required(endpoint: FHIREndpoint) -> MatchResult:
-    """Discovers SMART config and returns the auth URL the patient should visit."""
-    smart = await discover_smart_config(endpoint.base_url)
+    """Returns auth URL for the patient to grant access via SMART on FHIR."""
+    from auth.smart_flow import build_authorization_url
 
-    auth_url: Optional[str] = None
-    if smart and smart.authorization_endpoint:
-        from auth.smart_flow import build_authorization_url
-        auth_url = await build_authorization_url(
-            endpoint, settings.smart_redirect_uri, settings.smart_client_id
-        )
+    auth_url = await build_authorization_url(
+        endpoint, settings.smart_redirect_uri, settings.smart_client_id
+    )
 
     return MatchResult(
         endpoint=endpoint,
