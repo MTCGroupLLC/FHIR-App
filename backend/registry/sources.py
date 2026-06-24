@@ -155,6 +155,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             fhir_version="R4",
             registration_status="registered",
             developer_portal="https://fhir.epic.com/Documentation",
+            sandbox_hint="Sandbox only — use Epic test patient credentials. Username: fhircamila · Password: epicepic1. Other test patients: fhirjason, fhirenrique (same password).",
             source="manual",
         ),
         FHIREndpoint(
