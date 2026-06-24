@@ -17,7 +17,7 @@ const CONFIDENCE_COLOR = (c?: number) => {
 };
 
 function AuthRequiredCard({ result }: { result: MatchResult }) {
-  const { endpoint, auth_url, auth_instructions } = result;
+  const { endpoint, auth_url } = result;
   return (
     <div className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
@@ -27,14 +27,11 @@ function AuthRequiredCard({ result }: { result: MatchResult }) {
             {TYPE_LABEL[endpoint.endpoint_type] ?? endpoint.endpoint_type} &mdash; Authorization required
           </p>
         </div>
-        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full whitespace-nowrap">
           SMART on FHIR
         </span>
       </div>
-      {auth_instructions && (
-        <p className="text-xs text-gray-600 mt-2">{auth_instructions}</p>
-      )}
-      {auth_url && (
+      {auth_url ? (
         <a
           href={auth_url}
           target="_blank"
@@ -43,6 +40,11 @@ function AuthRequiredCard({ result }: { result: MatchResult }) {
         >
           Authorize access →
         </a>
+      ) : (
+        <p className="text-xs text-gray-500 mt-2">
+          This payer requires authorization. Log in to your member portal or contact{" "}
+          <strong>{endpoint.name}</strong> to access your records.
+        </p>
       )}
     </div>
   );
@@ -91,7 +93,7 @@ export default function SearchResults({ status }: { status: SearchStatus }) {
   const isRunning = status.state === "progress" || status.state === "pending";
 
   const confirmed = status.results.filter((r) => r.matched);
-  const authRequired = status.results.filter((r) => !r.matched && r.auth_url);
+  const authRequired = status.results.filter((r) => !r.matched);
 
   return (
     <div className="mt-6 space-y-4">

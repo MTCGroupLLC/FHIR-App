@@ -5,8 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const REDIRECT_URI = "http://localhost:3000/auth/callback";
 const CLIENT_ID = "drls-public";
+
+function getRedirectUri() {
+  if (typeof window === "undefined") return "http://localhost:3000/auth/callback";
+  return `${window.location.origin}/auth/callback`;
+}
 
 function CallbackHandler() {
   const params = useSearchParams();
@@ -33,7 +37,7 @@ function CallbackHandler() {
     const url = new URL(`${API}/api/auth/callback`);
     url.searchParams.set("code", code);
     url.searchParams.set("state", state);
-    url.searchParams.set("redirect_uri", REDIRECT_URI);
+    url.searchParams.set("redirect_uri", getRedirectUri());
     url.searchParams.set("client_id", CLIENT_ID);
 
     fetch(url.toString())
