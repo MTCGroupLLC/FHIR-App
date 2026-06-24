@@ -32,7 +32,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             scopes="patient/Patient.read patient/Coverage.read patient/ExplanationOfBenefit.read profile openid",
             registration_status="registered",
             developer_portal="https://bluebutton.cms.gov/developers/",
-            sandbox_hint="Sandbox only — use test account BBUser00000 through BBUser29999. Password matches number: BBUser00000 → PW00000!",
+            sandbox_hint="Sandbox only. Login: Username BBUser00000 · Password PW00000! (any number 00000–29999). After connecting, search with the synthetic patient name shown on the CMS consent screen, or try First Name: John, Last Name: Smith as a starting point — CMS assigns random synthetic demographics to each test account.",
             source="manual",
         ),
         FHIREndpoint(
@@ -44,7 +44,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             authorize_url="https://sandbox-api.va.gov/oauth2/health/v1/authorization",
             token_url="https://sandbox-api.va.gov/oauth2/health/v1/token",
             scopes="patient/Patient.read patient/Observation.read patient/Condition.read patient/MedicationRequest.read patient/DiagnosticReport.read patient/DocumentReference.read launch openid profile offline_access",
-            registration_status="pending",
+            registration_status="required",
             developer_portal="https://developer.va.gov/explore/api/fhir/docs",
             source="manual",
         ),
@@ -155,7 +155,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             fhir_version="R4",
             registration_status="registered",
             developer_portal="https://fhir.epic.com/Documentation",
-            sandbox_hint="Sandbox only — use Epic test patient credentials. Username: fhircamila · Password: epicepic1. Other test patients: fhirjason, fhirenrique (same password).",
+            sandbox_hint="Sandbox only. Login credentials: Username fhircamila · Password epicepic1 (or fhirjason / fhirenrique, same password). Then search with these demographics — fhircamila: First Camila, Last Lopez, DOB 08/20/1987, Female. fhirjason: First Jason, Last Argonaut, DOB 09/01/1951, Male.",
             source="manual",
         ),
         FHIREndpoint(

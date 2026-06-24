@@ -229,9 +229,9 @@ export default function ConnectPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Connect Your Health Accounts</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Connect Demo Health Accounts</h2>
         <p className="text-gray-500 mt-1 text-sm max-w-2xl">
-          Connect each payer or provider <strong>once</strong>. Your authorization is saved — every
+          Connect each sandbox endpoint <strong>once</strong>. Your authorization is saved — every
           future search automatically queries your connected accounts without asking again.
         </p>
         {!loading && (
