@@ -117,17 +117,23 @@ async def exchange_code(
     if not smart:
         return None
 
+    effective_client_id = endpoint.client_id or client_id
+
+    token_body: dict = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "client_id": effective_client_id,
+        "code_verifier": verifier,
+    }
+    if endpoint.client_secret:
+        token_body["client_secret"] = endpoint.client_secret
+
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
                 smart.token_endpoint,
-                data={
-                    "grant_type": "authorization_code",
-                    "code": code,
-                    "redirect_uri": redirect_uri,
-                    "client_id": client_id,
-                    "code_verifier": verifier,
-                },
+                data=token_body,
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
                 timeout=15,
             )

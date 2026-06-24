@@ -11,6 +11,8 @@ below covers the major payers and EHR systems where most US patients
 have records.
 """
 
+import os
+
 from models.endpoint import AuthType, EndpointType, FHIREndpoint
 
 
@@ -20,11 +22,13 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
         FHIREndpoint(
             id="cms-bluebutton",
             name="CMS Blue Button 2.0 (Medicare)",
-            base_url="https://fhir.bluebutton.cms.gov/v2/fhir",
+            base_url="https://sandbox.bluebutton.cms.gov/v2/fhir",
             endpoint_type=EndpointType.government,
             auth_type=AuthType.smart_standalone,
-            authorize_url="https://sandbox.bluebutton.cms.gov/v1/o/authorize/",
-            token_url="https://sandbox.bluebutton.cms.gov/v1/o/token/",
+            authorize_url="https://sandbox.bluebutton.cms.gov/v2/o/authorize/",
+            token_url="https://sandbox.bluebutton.cms.gov/v2/o/token/",
+            client_id="xPydhk7ReTjAgyzZnvYoc70LbdrWCDQvyyZrZdph",
+            client_secret=os.getenv("CMS_BB_CLIENT_SECRET"),
             source="manual",
         ),
         FHIREndpoint(
