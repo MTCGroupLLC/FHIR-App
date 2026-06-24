@@ -14,8 +14,10 @@ app = FastAPI(
 )
 
 _origins = ["http://localhost:3000"]
-if os.getenv("FRONTEND_URL"):
-    _origins.append(os.environ["FRONTEND_URL"])
+for _url in os.getenv("FRONTEND_URLS", os.getenv("FRONTEND_URL", "")).split(","):
+    _url = _url.strip()
+    if _url:
+        _origins.append(_url)
 
 app.add_middleware(
     CORSMiddleware,
