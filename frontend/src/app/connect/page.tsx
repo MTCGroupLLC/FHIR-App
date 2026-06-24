@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Endpoint } from "@/types";
+import { getSessionId } from "@/lib/session";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -137,7 +138,9 @@ export default function ConnectPage() {
 
   const fetchEndpoints = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/registry/endpoints`);
+      const res = await fetch(`${API}/api/registry/endpoints`, {
+        headers: { "X-Session-ID": getSessionId() },
+      });
       if (!res.ok) throw new Error("Failed to load endpoints");
       const data = await res.json();
       setEndpoints(data.endpoints as Endpoint[]);
@@ -167,7 +170,8 @@ export default function ConnectPage() {
 
     try {
       const res = await fetch(
-        `${API}/api/auth/authorize?endpoint_id=${encodeURIComponent(endpoint.id)}&redirect_uri=${encodeURIComponent(redirectUri)}`
+        `${API}/api/auth/authorize?endpoint_id=${encodeURIComponent(endpoint.id)}&redirect_uri=${encodeURIComponent(redirectUri)}`,
+        { headers: { "X-Session-ID": getSessionId() } }
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

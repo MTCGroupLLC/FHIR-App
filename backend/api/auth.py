@@ -22,7 +22,7 @@ Auth API routes:
 
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from auth.keys import get_public_jwk, rotate_keypair
@@ -67,7 +67,9 @@ async def get_authorization_url(
     endpoint_id: str = Query(...),
     redirect_uri: str = Query(None),
     client_id: str = Query(None),
+    x_session_id: Optional[str] = Header(None),
 ):
+    session_id = x_session_id or "default"
     endpoints = await get_all_endpoints()
     endpoint = next((e for e in endpoints if e.id == endpoint_id), None)
     if not endpoint:
@@ -77,6 +79,7 @@ async def get_authorization_url(
         endpoint,
         redirect_uri or settings.smart_redirect_uri,
         client_id or settings.smart_client_id,
+        session_id=session_id,
     )
     if not auth_url:
         raise HTTPException(

@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(bind=True, name="drls.search")
-def run_search(self, demographics: dict) -> dict[str, Any]:
+def run_search(self, demographics: dict, session_id: str = "default") -> dict[str, Any]:
     """
     Fan out patient matching across all registered endpoints.
     Updates task state with incremental results as endpoints respond.
     """
-    return asyncio.run(_async_search(self, demographics))
+    return asyncio.run(_async_search(self, demographics, session_id))
 
 
-async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
+async def _async_search(task: Any, demographics: dict, session_id: str = "default") -> dict[str, Any]:
     import asyncio
 
     from auth.token_cache import get_token
@@ -46,7 +46,7 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
     not_connected = []
     for ep in all_endpoints:
         if ep.auth_type in needs_auth:
-            token = await get_token(ep.id)
+            token = await get_token(session_id, ep.id)
             if token:
                 queryable.append(ep)
             else:
@@ -60,7 +60,7 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
 
     async def query_one(ep):
         async with semaphore:
-            result = await match_patient(ep, demo, timeout=settings.endpoint_timeout)
+            result = await match_patient(ep, demo, timeout=settings.endpoint_timeout, session_id=session_id)
             return result.model_dump()
 
     tasks_list = [query_one(ep) for ep in queryable]

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, Header, HTTPException
 from celery.result import AsyncResult
 
 from models.patient import PatientDemographics
@@ -8,8 +10,9 @@ router = APIRouter(prefix="/api/search", tags=["search"])
 
 
 @router.post("/")
-async def start_search(demographics: PatientDemographics):
-    task = run_search.delay(demographics.model_dump())
+async def start_search(demographics: PatientDemographics, x_session_id: Optional[str] = Header(None)):
+    session_id = x_session_id or "default"
+    task = run_search.delay(demographics.model_dump(), session_id)
     return {"job_id": task.id}
 
 

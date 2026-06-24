@@ -1,6 +1,6 @@
 """
 Redis-backed stores for:
-  - Access tokens (keyed by endpoint_id; TTL = token expiry)
+  - Access tokens (keyed by session_id + endpoint_id; TTL = token expiry)
   - OAuth state parameters (keyed by state UUID; TTL = 10 min)
   - PKCE verifiers (keyed by state UUID; TTL = 10 min)
 """
@@ -15,8 +15,8 @@ from core.config import settings
 _STATE_TTL = 600  # 10 minutes
 
 
-def _token_key(endpoint_id: str) -> str:
-    return f"drls:token:{endpoint_id}"
+def _token_key(session_id: str, endpoint_id: str) -> str:
+    return f"drls:token:{session_id}:{endpoint_id}"
 
 
 def _state_key(state: str) -> str:
@@ -27,18 +27,18 @@ def _verifier_key(state: str) -> str:
     return f"drls:verifier:{state}"
 
 
-async def store_token(endpoint_id: str, access_token: str, expires_in: int = 3600) -> None:
+async def store_token(session_id: str, endpoint_id: str, access_token: str, expires_in: int = 3600) -> None:
     r = aioredis.from_url(settings.redis_url)
     try:
-        await r.setex(_token_key(endpoint_id), max(expires_in - 30, 60), access_token)
+        await r.setex(_token_key(session_id, endpoint_id), max(expires_in - 30, 60), access_token)
     finally:
         await r.aclose()
 
 
-async def get_token(endpoint_id: str) -> Optional[str]:
+async def get_token(session_id: str, endpoint_id: str) -> Optional[str]:
     r = aioredis.from_url(settings.redis_url)
     try:
-        val = await r.get(_token_key(endpoint_id))
+        val = await r.get(_token_key(session_id, endpoint_id))
         return val.decode() if val else None
     finally:
         await r.aclose()

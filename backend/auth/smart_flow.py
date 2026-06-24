@@ -46,6 +46,7 @@ async def build_authorization_url(
     endpoint: FHIREndpoint,
     redirect_uri: str,
     client_id: str,
+    session_id: str = "default",
     extra_scopes: str = "",
 ) -> Optional[str]:
     """
@@ -59,7 +60,7 @@ async def build_authorization_url(
     state = str(uuid.uuid4())
     verifier, challenge = generate_pkce_pair()
 
-    await store_state(state, {"endpoint_id": endpoint.id, "redirect_uri": redirect_uri})
+    await store_state(state, {"endpoint_id": endpoint.id, "redirect_uri": redirect_uri, "session_id": session_id})
     await store_verifier(state, verifier)
 
     scopes = endpoint.scopes or PATIENT_SCOPES
@@ -100,6 +101,7 @@ async def exchange_code(
         return None
 
     endpoint_id = state_data["endpoint_id"]
+    session_id = state_data.get("session_id", "default")
     await delete_state_and_verifier(state)
 
     # We need the endpoint's token URL — re-discover from cached smart config.
@@ -142,7 +144,7 @@ async def exchange_code(
             access_token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 3600)
             if access_token:
-                await store_token(endpoint_id, access_token, expires_in)
+                await store_token(session_id, endpoint_id, access_token, expires_in)
             return access_token
         except Exception as e:
             logger.error("Token exchange failed for endpoint %s: %s", endpoint_id, e)
@@ -211,7 +213,7 @@ async def get_backend_services_token(
             access_token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 3600)
             if access_token:
-                await store_token(endpoint.id, access_token, expires_in)
+                await store_token(session_id, endpoint.id, access_token, expires_in)
             return access_token
         except Exception as e:
             logger.error(

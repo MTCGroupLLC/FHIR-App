@@ -93,9 +93,10 @@ async def match_patient(
     endpoint: FHIREndpoint,
     demo: PatientDemographics,
     timeout: int = 10,
+    session_id: str = "default",
 ) -> MatchResult:
     # Check if we have a cached token for this endpoint
-    cached_token = await get_token(endpoint.id)
+    cached_token = await get_token(session_id, endpoint.id)
 
     if cached_token:
         headers = {
