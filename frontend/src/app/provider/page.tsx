@@ -46,11 +46,18 @@ export default function ProviderPage() {
   return (
     <div className="space-y-6">
       {/* HIPAA notice */}
-      <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 text-sm">
-        <p className="font-semibold text-amber-900">Provider / Staff Mode</p>
-        <p className="text-amber-800 mt-0.5">
-          You must have patient consent before initiating a search. Searching without authorization
-          may violate HIPAA. This mode is intended for treating providers and authorized care team staff.
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm">
+        <p className="font-semibold text-blue-900">Provider / Staff Mode — HIPAA TPO Applies</p>
+        <p className="text-blue-800 mt-1">
+          Under HIPAA 45 CFR §164.506, covered entities may use and disclose PHI for{" "}
+          <strong>Treatment, Payment, and Operations (TPO)</strong> without patient authorization.
+          Querying another covered entity for records to treat a patient in your care is a
+          permitted TPO disclosure — no patient consent form required.
+        </p>
+        <p className="text-blue-700 text-xs mt-2">
+          Exceptions: substance use disorder records (42 CFR Part 2), certain mental health and
+          reproductive health records under applicable state law — these require explicit patient
+          authorization even between covered entities.
         </p>
       </div>
 
