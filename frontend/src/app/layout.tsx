@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import CaduceusIcon from "@/components/CaduceusIcon";
 
 export const metadata: Metadata = {
   title: "FHIR-Based Medical Record Locator Service",
@@ -12,9 +13,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-gray-50 text-gray-900 min-h-screen">
         <header className="bg-blue-700 text-white px-6 py-4 shadow">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">FHIR-Based RLS</h1>
-              <p className="text-blue-200 text-sm">FHIR-Based Medical Record Locator Service</p>
+            <div className="flex items-center gap-3">
+              <CaduceusIcon className="h-12 w-9 flex-shrink-0" />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">FHIR-Based RLS</h1>
+                <p className="text-blue-200 text-sm">FHIR-Based Medical Record Locator Service</p>
+              </div>
             </div>
             <nav className="flex gap-4 text-sm">
               <a href="/" className="hover:text-blue-200">Patient Search</a>
