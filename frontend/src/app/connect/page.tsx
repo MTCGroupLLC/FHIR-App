@@ -13,8 +13,89 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const TYPE_ORDER = ["government", "payer", "provider", "hie"];
+const GROUP_LABEL: Record<string, string> = {
+  government: "Government Programs",
+  payer: "Commercial Payers",
+  provider: "Providers & EHR Networks",
+  hie: "Health Information Exchanges",
+};
 
 const NEEDS_AUTH = new Set(["smart_standalone", "oauth2", "smart_backend_services"]);
+
+function StatusBadge({
+  endpoint,
+  onConnect,
+  connecting,
+}: {
+  endpoint: Endpoint;
+  onConnect: (ep: Endpoint) => void;
+  connecting: boolean;
+}) {
+  const requiresAuth = endpoint.auth_type ? NEEDS_AUTH.has(endpoint.auth_type) : false;
+
+  // Open endpoint — no OAuth needed
+  if (!requiresAuth) {
+    return (
+      <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+        Open — no login needed
+      </span>
+    );
+  }
+
+  // Already connected
+  if (endpoint.connected) {
+    return (
+      <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-3 py-1 rounded-full">
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+        Connected
+      </span>
+    );
+  }
+
+  // Registered with this provider — show Connect button
+  if (endpoint.auth_ready) {
+    return (
+      <button
+        onClick={() => onConnect(endpoint)}
+        disabled={connecting}
+        className="text-xs font-semibold px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition"
+      >
+        {connecting ? "Opening…" : "Connect →"}
+      </button>
+    );
+  }
+
+  // Registration submitted, awaiting credentials
+  if (endpoint.registration_status === "pending") {
+    return (
+      <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-3 py-1 rounded-full">
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Approval Pending
+      </span>
+    );
+  }
+
+  // Not yet registered — show developer portal link
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-gray-400 italic">Registration required</span>
+      {endpoint.developer_portal && (
+        <a
+          href={endpoint.developer_portal}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-blue-600 hover:underline"
+        >
+          Register →
+        </a>
+      )}
+    </div>
+  );
+}
 
 function EndpointCard({
   endpoint,
@@ -25,39 +106,14 @@ function EndpointCard({
   onConnect: (ep: Endpoint) => void;
   connecting: boolean;
 }) {
-  const requiresAuth = endpoint.auth_type ? NEEDS_AUTH.has(endpoint.auth_type) : false;
-  const hasAuthUrl = Boolean(endpoint.authorize_url);
-
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center justify-between gap-4">
       <div className="min-w-0">
         <p className="font-semibold text-gray-800 truncate">{endpoint.name}</p>
         <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[endpoint.endpoint_type] ?? endpoint.endpoint_type}</p>
       </div>
-
       <div className="flex items-center gap-3 flex-shrink-0">
-        {!requiresAuth ? (
-          <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
-            Open — no login needed
-          </span>
-        ) : endpoint.connected ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-3 py-1 rounded-full">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            Connected
-          </span>
-        ) : hasAuthUrl ? (
-          <button
-            onClick={() => onConnect(endpoint)}
-            disabled={connecting}
-            className="text-xs font-semibold px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition"
-          >
-            {connecting ? "Opening…" : "Connect →"}
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400 italic">Auth URL pending</span>
-        )}
+        <StatusBadge endpoint={endpoint} onConnect={onConnect} connecting={connecting} />
       </div>
     </div>
   );
@@ -110,6 +166,11 @@ export default function ConnectPage() {
         return;
       }
       const { auth_url } = await res.json();
+      if (!auth_url) {
+        alert(`${endpoint.name} did not return an authorization URL. The endpoint may be temporarily unavailable.`);
+        setConnecting(null);
+        return;
+      }
 
       const popup = window.open(
         auth_url,
@@ -117,7 +178,6 @@ export default function ConnectPage() {
         "width=640,height=720,toolbar=no,menubar=no,scrollbars=yes"
       );
       if (!popup) {
-        // Popup blocked — fall back to same-tab redirect
         window.location.href = auth_url;
       }
     } catch {
@@ -132,16 +192,11 @@ export default function ConnectPage() {
   }, {});
 
   const connectedCount = endpoints.filter((e) => {
-    if (!NEEDS_AUTH.has(e.auth_type ?? "")) return true; // open
+    if (!NEEDS_AUTH.has(e.auth_type ?? "")) return true;
     return e.connected;
   }).length;
 
-  const GROUP_LABEL: Record<string, string> = {
-    government: "Government Programs",
-    payer: "Commercial Payers",
-    provider: "Providers & EHR Networks",
-    hie: "Health Information Exchanges",
-  };
+  const registeredCount = endpoints.filter((e) => e.auth_ready || e.registration_status === "registered").length;
 
   return (
     <div className="space-y-8">
@@ -152,9 +207,11 @@ export default function ConnectPage() {
           future search automatically queries your connected accounts without asking again.
         </p>
         {!loading && (
-          <p className="text-sm mt-2 font-medium text-blue-700">
-            {connectedCount} of {endpoints.length} sources ready
-          </p>
+          <div className="flex gap-4 mt-2 text-sm">
+            <span className="font-medium text-blue-700">{connectedCount} of {endpoints.length} connected</span>
+            <span className="text-gray-400">·</span>
+            <span className="text-gray-500">{registeredCount} registered with app credentials</span>
+          </div>
         )}
       </div>
 
@@ -194,9 +251,9 @@ export default function ConnectPage() {
           <li>Your authorization is saved. Return to <a href="/" className="underline font-medium">Patient Search</a> and run a search — connected accounts are queried automatically.</li>
         </ol>
         <p className="mt-3 text-blue-600 text-xs">
-          Each payer and provider uses the federal SMART on FHIR standard (required by the CMS
-          Interoperability Rule). Your credentials are never stored by this app — only the short-lived
-          access token the payer issues.
+          Payers showing <em>Registration required</em> require a one-time developer registration
+          before this app can connect on your behalf. Click <strong>Register →</strong> next to each
+          to complete that process, then return here.
         </p>
       </div>
     </div>

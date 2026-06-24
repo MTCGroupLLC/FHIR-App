@@ -30,6 +30,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             client_id="xPydhk7ReTjAgyzZnvYoc70LbdrWCDQvyyZrZdph",
             client_secret=os.getenv("CMS_BB_CLIENT_SECRET"),
             scopes="patient/Patient.read patient/Coverage.read patient/ExplanationOfBenefit.read profile openid",
+            registration_status="registered",
+            developer_portal="https://bluebutton.cms.gov/developers/",
             source="manual",
         ),
         FHIREndpoint(
@@ -41,6 +43,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             authorize_url="https://sandbox-api.va.gov/oauth2/health/v1/authorization",
             token_url="https://sandbox-api.va.gov/oauth2/health/v1/token",
             scopes="patient/Patient.read patient/Observation.read patient/Condition.read patient/MedicationRequest.read patient/DiagnosticReport.read patient/DocumentReference.read launch openid profile offline_access",
+            registration_status="pending",
+            developer_portal="https://developer.va.gov/explore/api/fhir/docs",
             source="manual",
         ),
         # ── Major Commercial Payers ────────────────────────────────────────────
@@ -52,6 +56,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             auth_type=AuthType.smart_standalone,
             authorize_url="https://patient-access.aetna.com/Patient-Access-Combined/oauth2/authorize",
             token_url="https://patient-access.aetna.com/Patient-Access-Combined/oauth2/token",
+            registration_status="required",
+            developer_portal="https://developerportal.aetna.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -60,6 +66,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhirprd.anthem.com/medicals/api/v3",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.anthem.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -68,6 +76,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhirapi.cigna.com/patient-access/v3",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.cigna.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -76,6 +86,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://api.humana.com/fhir/api/R4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.humana.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -84,6 +96,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhir.uhc.com/api/FHIR/R4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.uhc.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -92,6 +106,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhir.kp.org/service/ptnt/patient-data/R4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.kp.org",
             source="manual",
         ),
         FHIREndpoint(
@@ -100,6 +116,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhir.bcbsfederal.com/patient-api/r4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.fepblue.org",
             source="manual",
         ),
         FHIREndpoint(
@@ -108,6 +126,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://api.molinahealthcare.com/fhir/r4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.molinahealthcare.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -116,6 +136,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhirapi.centene.com/R4",
             endpoint_type=EndpointType.payer,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.centene.com",
             source="manual",
         ),
         # ── Major EHR / Provider Networks ─────────────────────────────────────
@@ -130,6 +152,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             client_id="82028c07-2117-45de-9a82-20d91dc77355",
             scopes="openid fhirUser launch/patient patient/Patient.read patient/Observation.read patient/Condition.read patient/MedicationRequest.read patient/DiagnosticReport.read patient/DocumentReference.read patient/AllergyIntolerance.read patient/Immunization.read",
             fhir_version="R4",
+            registration_status="registered",
+            developer_portal="https://fhir.epic.com/Documentation",
             source="manual",
         ),
         FHIREndpoint(
@@ -141,6 +165,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             authorize_url="https://authorization.cerner.com/tenants/ec2458f2-1e24-41c8-b71b-0e701af7583d/protocols/oauth2/profiles/smart-v1/personas/patient/authorize",
             token_url="https://authorization.cerner.com/tenants/ec2458f2-1e24-41c8-b71b-0e701af7583d/protocols/oauth2/profiles/smart-v1/token",
             fhir_version="R4",
+            registration_status="required",
+            developer_portal="https://code.cerner.com",
             source="manual",
         ),
         FHIREndpoint(
@@ -149,6 +175,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhir.commonspirit.org/api/FHIR/R4",
             endpoint_type=EndpointType.provider,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://fhir.commonspirit.org",
             source="manual",
         ),
         FHIREndpoint(
@@ -157,6 +185,8 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             base_url="https://fhir.hcahealthcare.com/api/FHIR/R4",
             endpoint_type=EndpointType.provider,
             auth_type=AuthType.smart_standalone,
+            registration_status="required",
+            developer_portal="https://developer.hcahealthcare.com",
             source="manual",
         ),
     ]

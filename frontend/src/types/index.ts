@@ -21,6 +21,9 @@ export interface Endpoint {
   authorize_url?: string | null;
   token_url?: string | null;
   connected: boolean;
+  auth_ready: boolean;
+  registration_status: "registered" | "pending" | "required";
+  developer_portal?: string | null;
   source: string;
 }
 

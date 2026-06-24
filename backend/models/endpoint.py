@@ -37,10 +37,12 @@ class FHIREndpoint(BaseModel):
     auth_type: Optional[AuthType] = None
     token_url: Optional[str] = None
     authorize_url: Optional[str] = None
-    client_id: Optional[str] = None      # per-endpoint OAuth client ID; overrides global setting
-    client_secret: Optional[str] = None  # confidential client secret; load from env, never hardcode
-    scopes: Optional[str] = None         # space-separated OAuth scopes; overrides default patient scopes
-    source: str                          # cms, lantern, epic, cerner, manual
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    scopes: Optional[str] = None
+    developer_portal: Optional[str] = None  # registration URL shown in UI for unregistered endpoints
+    registration_status: str = "required"   # "registered" | "pending" | "required"
+    source: str
 
 
 class MatchResult(BaseModel):

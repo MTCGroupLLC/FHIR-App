@@ -15,8 +15,10 @@ async def list_endpoints():
         data = ep.model_dump()
         if ep.auth_type in needs_auth_types:
             data["connected"] = await get_token(ep.id) is not None
+            data["auth_ready"] = ep.registration_status == "registered"
         else:
-            data["connected"] = True  # open endpoints are always queryable
+            data["connected"] = True
+            data["auth_ready"] = True
         result.append(data)
     return {"count": len(result), "endpoints": result}
 
