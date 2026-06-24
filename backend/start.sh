@@ -1,4 +1,5 @@
 #!/bin/sh
+export PYTHONPATH=/app
 if [ "$SERVICE_TYPE" = "worker" ]; then
   exec celery -A workers.celery_app worker --loglevel=info --concurrency=10
 else
