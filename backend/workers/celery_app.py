@@ -24,9 +24,7 @@ def run_search(self, demographics: dict) -> dict[str, Any]:
     Fan out patient matching across all registered endpoints.
     Updates task state with incremental results as endpoints respond.
     """
-    return asyncio.get_event_loop().run_until_complete(
-        _async_search(self, demographics)
-    )
+    return asyncio.run(_async_search(self, demographics))
 
 
 async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
@@ -41,7 +39,8 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
     demo = PatientDemographics(**demographics)
     endpoints = await get_all_endpoints()
 
-    results = []
+    confirmed = []   # matched=True — green cards
+    auth_needed = [] # auth_url present — amber cards
     errors = []
     semaphore = asyncio.Semaphore(settings.max_concurrent_queries)
 
@@ -56,8 +55,10 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
     for i, coro in enumerate(asyncio.as_completed(tasks)):
         result = await coro
         if result.get("matched"):
-            results.append(result)
-        elif result.get("error") and "authentication" not in (result.get("error") or ""):
+            confirmed.append(result)
+        elif result.get("auth_url"):
+            auth_needed.append(result)
+        elif result.get("error") and result.get("error") != "No Patient resource":
             errors.append(result)
 
         task.update_state(
@@ -65,15 +66,15 @@ async def _async_search(task: Any, demographics: dict) -> dict[str, Any]:
             meta={
                 "current": i + 1,
                 "total": total,
-                "matches": len(results),
-                "results": results,
+                "matches": len(confirmed),
+                "results": confirmed + auth_needed,
             },
         )
 
     return {
         "status": "complete",
         "total_queried": total,
-        "matches_found": len(results),
-        "results": results,
-        "errors": errors[:20],  # cap error list
+        "matches_found": len(confirmed),
+        "results": confirmed + auth_needed,
+        "errors": errors[:20],
     }
