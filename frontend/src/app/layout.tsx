@@ -27,6 +27,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main className="max-w-4xl mx-auto px-6 py-8">{children}</main>
+        <footer className="border-t border-gray-200 mt-12 py-6 text-center text-xs text-gray-400">
+          <div className="flex items-center justify-center gap-6">
+            <span>&copy; {new Date().getFullYear()} MTC Group LLC</span>
+            <a href="/privacy" className="hover:text-gray-600 underline">Privacy Policy</a>
+            <a href="/terms" className="hover:text-gray-600 underline">Terms &amp; Conditions</a>
+            <a href="mailto:rick@mtcgroupllc.com" className="hover:text-gray-600 underline">Contact</a>
+          </div>
+        </footer>
       </body>
     </html>
   );
