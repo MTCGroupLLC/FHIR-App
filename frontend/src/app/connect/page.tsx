@@ -196,17 +196,31 @@ export default function ConnectPage() {
     }
   };
 
-  const grouped = TYPE_ORDER.reduce<Record<string, Endpoint[]>>((acc, type) => {
-    acc[type] = endpoints.filter((e) => e.endpoint_type === type);
-    return acc;
-  }, {});
+  const connectedList   = endpoints.filter((e) => e.connected);
+  const readyList       = endpoints.filter((e) => !e.connected && e.auth_ready);
+  const pendingList     = endpoints.filter((e) => !e.connected && !e.auth_ready && e.registration_status === "pending");
+  const requiredList    = endpoints.filter((e) => !e.connected && !e.auth_ready && e.registration_status === "required");
 
-  const connectedCount = endpoints.filter((e) => {
-    if (!NEEDS_AUTH.has(e.auth_type ?? "")) return true;
-    return e.connected;
-  }).length;
+  const connectedCount = connectedList.length;
+  const totalCount = endpoints.length;
 
-  const registeredCount = endpoints.filter((e) => e.auth_ready || e.registration_status === "registered").length;
+  const StatusSection = ({
+    title, subtitle, eps, accent,
+  }: {
+    title: string; subtitle?: string; eps: Endpoint[]; accent: string;
+  }) => eps.length === 0 ? null : (
+    <div>
+      <div className="flex items-baseline gap-2 mb-3">
+        <h3 className={`text-xs font-semibold uppercase tracking-widest ${accent}`}>{title}</h3>
+        {subtitle && <span className="text-xs text-gray-400">{subtitle}</span>}
+      </div>
+      <div className="space-y-2">
+        {eps.map((ep) => (
+          <EndpointCard key={ep.id} endpoint={ep} onConnect={handleConnect} connecting={connecting === ep.id} />
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-8">
@@ -217,11 +231,9 @@ export default function ConnectPage() {
           future search automatically queries your connected accounts without asking again.
         </p>
         {!loading && (
-          <div className="flex gap-4 mt-2 text-sm">
-            <span className="font-medium text-blue-700">{connectedCount} of {endpoints.length} connected</span>
-            <span className="text-gray-400">·</span>
-            <span className="text-gray-500">{registeredCount} registered with app credentials</span>
-          </div>
+          <p className="text-sm mt-2 font-medium text-blue-700">
+            {connectedCount} of {totalCount} connected
+          </p>
         )}
       </div>
 
@@ -234,23 +246,12 @@ export default function ConnectPage() {
       {loading ? (
         <div className="text-gray-400 text-sm">Loading endpoints…</div>
       ) : (
-        TYPE_ORDER.filter((type) => grouped[type]?.length > 0).map((type) => (
-          <div key={type}>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
-              {GROUP_LABEL[type]}
-            </h3>
-            <div className="space-y-2">
-              {grouped[type].map((ep) => (
-                <EndpointCard
-                  key={ep.id}
-                  endpoint={ep}
-                  onConnect={handleConnect}
-                  connecting={connecting === ep.id}
-                />
-              ))}
-            </div>
-          </div>
-        ))
+        <>
+          <StatusSection title="Connected" eps={connectedList} accent="text-green-600" />
+          <StatusSection title="Ready to Connect" subtitle="— click Connect to authorize access" eps={readyList} accent="text-blue-600" />
+          <StatusSection title="Pending Approval" subtitle="— registration submitted, awaiting credentials" eps={pendingList} accent="text-amber-600" />
+          <StatusSection title="Registration Required" subtitle={`— ${requiredList.length} endpoints need developer portal registration before connecting`} eps={requiredList} accent="text-gray-400" />
+        </>
       )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-4 text-sm text-blue-800">
