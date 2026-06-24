@@ -107,14 +107,24 @@ function EndpointCard({
   connecting: boolean;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <p className="font-semibold text-gray-800 truncate">{endpoint.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[endpoint.endpoint_type] ?? endpoint.endpoint_type}</p>
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-800 truncate">{endpoint.name}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{TYPE_LABEL[endpoint.endpoint_type] ?? endpoint.endpoint_type}</p>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <StatusBadge endpoint={endpoint} onConnect={onConnect} connecting={connecting} />
+        </div>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <StatusBadge endpoint={endpoint} onConnect={onConnect} connecting={connecting} />
-      </div>
+      {endpoint.sandbox_hint && !endpoint.connected && (
+        <div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+          </svg>
+          <p className="text-xs text-amber-800">{endpoint.sandbox_hint}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,6 +24,7 @@ export interface Endpoint {
   auth_ready: boolean;
   registration_status: "registered" | "pending" | "required";
   developer_portal?: string | null;
+  sandbox_hint?: string | null;
   source: string;
 }
 

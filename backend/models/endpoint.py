@@ -40,8 +40,9 @@ class FHIREndpoint(BaseModel):
     client_id: Optional[str] = None
     client_secret: Optional[str] = None
     scopes: Optional[str] = None
-    developer_portal: Optional[str] = None  # registration URL shown in UI for unregistered endpoints
-    registration_status: str = "required"   # "registered" | "pending" | "required"
+    developer_portal: Optional[str] = None
+    registration_status: str = "required"
+    sandbox_hint: Optional[str] = None      # shown in UI when endpoint is a sandbox with test credentials
     source: str
 
 

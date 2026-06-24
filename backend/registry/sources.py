@@ -32,6 +32,7 @@ def get_curated_endpoints() -> list[FHIREndpoint]:
             scopes="patient/Patient.read patient/Coverage.read patient/ExplanationOfBenefit.read profile openid",
             registration_status="registered",
             developer_portal="https://bluebutton.cms.gov/developers/",
+            sandbox_hint="Sandbox only — use test account BBUser00000 through BBUser29999. Password matches number: BBUser00000 → PW00000!",
             source="manual",
         ),
         FHIREndpoint(
