@@ -18,6 +18,45 @@ from models.endpoint import AuthType, EndpointType, FHIREndpoint
 
 def get_curated_endpoints() -> list[FHIREndpoint]:
     return [
+        # ── Open / Public Test Servers (no auth — available for provider search immediately) ──
+        FHIREndpoint(
+            id="smarthealthit-open",
+            name="SMART Health IT Reference Server",
+            base_url="https://r4.smarthealthit.org",
+            endpoint_type=EndpointType.hie,
+            auth_type=AuthType.open,
+            fhir_version="R4",
+            registration_status="registered",
+            sandbox_hint="Public FHIR R4 reference server with synthetic patients. No login required — available for provider demographic search immediately. Try: First Name Camila, Last Name Lopez, DOB 1987-08-20.",
+            source="manual",
+        ),
+        FHIREndpoint(
+            id="hapi-open",
+            name="HAPI FHIR Public Test Server",
+            base_url="https://hapi.fhir.org/baseR4",
+            endpoint_type=EndpointType.hie,
+            auth_type=AuthType.open,
+            fhir_version="R4",
+            registration_status="registered",
+            sandbox_hint="Public HAPI FHIR R4 test server. No login required. Contains a mix of synthetic and user-contributed test data.",
+            source="manual",
+        ),
+        # ── Backend Services (provider-to-system, no patient login required) ──
+        FHIREndpoint(
+            id="epic-backend",
+            name="Epic FHIR — Backend Services (Provider Access)",
+            base_url="https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4",
+            endpoint_type=EndpointType.provider,
+            auth_type=AuthType.smart_backend_services,
+            token_url="https://fhir.epic.com/interconnect-fhir-oauth/oauth2/token",
+            client_id=os.getenv("EPIC_BACKEND_CLIENT_ID"),
+            scopes="system/Patient.read system/Observation.read system/Condition.read system/MedicationRequest.read system/DiagnosticReport.read system/AllergyIntolerance.read system/Immunization.read",
+            fhir_version="R4",
+            registration_status="required" if not os.getenv("EPIC_BACKEND_CLIENT_ID") else "registered",
+            developer_portal="https://fhir.epic.com/Documentation?docId=oauth2&section=BackendOAuth2Guide",
+            sandbox_hint="Provider-to-system access. Requires registering a Backend Services app at fhir.epic.com with the JWKS URL of this server. No patient login needed — queries by demographics using a signed JWT.",
+            source="manual",
+        ),
         # ── Government ────────────────────────────────────────────────────────
         FHIREndpoint(
             id="cms-bluebutton",

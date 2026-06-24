@@ -16,6 +16,7 @@ from typing import Optional
 import httpx
 
 from auth.smart_discovery import discover_smart_config
+from auth.smart_flow import get_backend_services_token
 from auth.token_cache import get_token
 from core.config import settings
 from models.endpoint import AuthType, FHIREndpoint, MatchResult
@@ -109,17 +110,27 @@ async def match_patient(
         headers = {"Accept": "application/fhir+json"}
         return await _query_endpoint(endpoint, demo, headers, timeout)
 
-    # SMART endpoint without a cached token — discover and return auth URL
-    if endpoint.auth_type in (AuthType.smart_standalone, AuthType.oauth2):
-        return await _return_auth_required(endpoint)
-
-    # Backend Services endpoints require pre-configured credentials; skip automatically
+    # Backend Services — acquire a system-level token via signed JWT (no patient login)
     if endpoint.auth_type == AuthType.smart_backend_services:
+        if not endpoint.client_id:
+            return MatchResult(
+                endpoint=endpoint,
+                matched=False,
+                error="Backend services client_id not configured — register at the provider's developer portal",
+            )
+        system_token = await get_backend_services_token(endpoint, endpoint.client_id)
+        if system_token:
+            headers = {"Accept": "application/fhir+json", "Authorization": f"Bearer {system_token}"}
+            return await _query_endpoint(endpoint, demo, headers, timeout)
         return MatchResult(
             endpoint=endpoint,
             matched=False,
-            error="Backend services credentials not configured for this endpoint",
+            error="Backend services token request failed — check JWKS registration and client_id",
         )
+
+    # SMART standalone without a cached patient token — prompt patient to connect
+    if endpoint.auth_type in (AuthType.smart_standalone, AuthType.oauth2):
+        return await _return_auth_required(endpoint)
 
     return MatchResult(endpoint=endpoint, matched=False, error="Unsupported auth type")
 

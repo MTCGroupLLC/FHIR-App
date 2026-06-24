@@ -195,8 +195,14 @@ async def get_backend_services_token(
     """
     SMART Backend Services: signs a JWT with the managed private key and
     exchanges it for an access token via the client_credentials grant.
+    Tokens are cached under the system-level session key "backend-services".
     Returns the access token or None.
     """
+    # Return cached system-level token if still valid
+    cached = await get_token("backend-services", endpoint.id)
+    if cached:
+        return cached
+
     smart = await _get_smart_config(endpoint)
     if not smart:
         logger.debug("No SMART config for %s", endpoint.base_url)
@@ -211,7 +217,7 @@ async def get_backend_services_token(
         "aud": smart.token_endpoint,
         "jti": str(uuid.uuid4()),
         "iat": now,
-        "exp": now + 300,  # 5 min max per spec
+        "exp": now + 300,
     }
 
     try:
@@ -225,6 +231,8 @@ async def get_backend_services_token(
         logger.error("JWT signing failed: %s", e)
         return None
 
+    scopes = endpoint.scopes or SYSTEM_SCOPES
+
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
@@ -235,7 +243,7 @@ async def get_backend_services_token(
                         "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
                     ),
                     "client_assertion": signed_jwt,
-                    "scope": SYSTEM_SCOPES,
+                    "scope": scopes,
                 },
                 headers={"Content-Type": "application/x-www-form-urlencoded"},
                 timeout=15,
@@ -245,7 +253,7 @@ async def get_backend_services_token(
             access_token = token_data.get("access_token")
             expires_in = token_data.get("expires_in", 3600)
             if access_token:
-                await store_token(session_id, endpoint.id, access_token, expires_in)
+                await store_token("backend-services", endpoint.id, access_token, expires_in)
             return access_token
         except Exception as e:
             logger.error(
